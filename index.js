@@ -63,8 +63,9 @@ app.get('/api/persons/:id', (request, response) => {
 app.delete('/api/persons/:id', (request, response) => {
   const id = request.params.id
   persons = persons.filter(person => person.id !== id)
-
+  // console.log('Delete', persons)
   response.status(204).end()
+
 })
 
 app.post('/api/persons', (request, response) => {
@@ -88,9 +89,9 @@ app.post('/api/persons', (request, response) => {
     const id = Math.floor(Math.random()*10000000)
     person.id = String(id)
     persons = persons.concat(person)
-    // console.log(person)
+    console.log('person added?')
     // console.log(JSON.stringify(person))
-    response.json(person)
+    return response.json(person)
     // morgan.token('body', request => JSON.stringify(request.body))
   }
 })
