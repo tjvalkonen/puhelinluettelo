@@ -1,9 +1,12 @@
+
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
 
-
+/*
 let persons  = [
   { 
     name: "Arto Hellas", 
@@ -26,6 +29,7 @@ let persons  = [
         id: "4"
   }
 ]
+*/
 
 app.use(express.static('dist'))
 app.use(express.json())
@@ -43,11 +47,23 @@ app.get('/', (request, response) => {
 })
 
 app.get('/info', (request, response) => {
+  // Refactor to use MongoDB
     let l = persons.length
     let date = new Date()
     response.send(`<p>Phonebook has info for ${l} people</p></p>${date}</p>`)
 })
 
+app.get('/api/persons/:id', (request, response) => {
+  Person.findById(request.params.id).then(person => {
+    // response.json(person)
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(404).end()
+    }
+  })
+})
+/*
 app.get('/api/persons/:id', (request, response) => {
   const id = request.params.id
   const person = persons.find(person => person.id === id)
@@ -59,6 +75,7 @@ app.get('/api/persons/:id', (request, response) => {
   }
 
 })
+*/
 
 app.delete('/api/persons/:id', (request, response) => {
   const id = request.params.id
@@ -68,6 +85,37 @@ app.delete('/api/persons/:id', (request, response) => {
 
 })
 
+app.post('/api/persons', (request, response) => {
+  const body = request.body
+  console.log('post', body.name)
+
+  /*
+  if (body.content === undefined) {
+    return response.status(400).json({ error: 'content missing' })
+  }
+*/
+if(!body.name){
+  return response.status(400).json({ 
+    error: 'Name missing!' 
+  })
+} else if (!body.number)
+{
+  return response.status(400).json({ 
+    error: 'Number missing!' 
+  })
+}
+
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  })
+
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
+})
+
+/*
 app.post('/api/persons', (request, response) => {
   const person = request.body
 
@@ -95,12 +143,22 @@ app.post('/api/persons', (request, response) => {
     // morgan.token('body', request => JSON.stringify(request.body))
   }
 })
+*/
 
+app.get('/api/persons', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
+})
+
+/*
 app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
+*/
 
-const PORT = process.env.PORT || 3001
+// const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
