@@ -1,4 +1,3 @@
-
 require('dotenv').config()
 const express = require('express')
 const app = express()
@@ -46,14 +45,16 @@ app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
 
-app.get('/info', (request, response) => {
-  // Refactor to use MongoDB
-    let l = persons.length
-    let date = new Date()
-    response.send(`<p>Phonebook has info for ${l} people</p></p>${date}</p>`)
+app.get('/info', (request, response, next) => {
+  let date = new Date()
+
+  Person.find({}).then(persons => {
+    response.send(`<p>Phonebook has info for ${persons.length} people</p></p>${date}</p>`)
+  })
+  .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id).then(person => {
     // response.json(person)
     if (person) {
@@ -62,41 +63,24 @@ app.get('/api/persons/:id', (request, response) => {
       response.status(404).end()
     }
   })
-})
-/*
-app.get('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  const person = persons.find(person => person.id === id)
-
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
-  }
-
-})
-*/
-
-app.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(person => person.id !== id)
-  // console.log('Delete', persons)
-  response.status(204).end()
-
+  .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
+})
+
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
   console.log('post', body.name)
 
-  /*
-  if (body.content === undefined) {
-    return response.status(400).json({ error: 'content missing' })
-  }
-*/
 if(!body.name){
   return response.status(400).json({ 
-    error: 'Name missing!' 
+    error: `Name missing!`
   })
 } else if (!body.number)
 {
@@ -104,7 +88,6 @@ if(!body.name){
     error: 'Number missing!' 
   })
 }
-
   const person = new Person({
     name: body.name,
     number: body.number,
@@ -113,37 +96,25 @@ if(!body.name){
   person.save().then(savedPerson => {
     response.json(savedPerson)
   })
+  .catch(error => next(error))
 })
 
-/*
-app.post('/api/persons', (request, response) => {
-  const person = request.body
 
-  if(!person.name){
-    return response.status(400).json({ 
-      error: 'Name missing!' 
-    })
-  } else if (!person.number)
-  {
-    return response.status(400).json({ 
-      error: 'Number missing!' 
-    })
-  } else if (persons.find(p => p.name === person.name))  
-  {
-    return response.status(400).json({ 
-      error: `${person.name} already exists! Name must be unique.` 
-    })
-  } else {
-    const id = Math.floor(Math.random()*10000000)
-    person.id = String(id)
-    persons = persons.concat(person)
-    console.log('person added?')
-    // console.log(JSON.stringify(person))
-    return response.json(person)
-    // morgan.token('body', request => JSON.stringify(request.body))
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const person = {
+    name: body.name,
+    number: body.number,
   }
+  // Number can be empty!
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
 })
-*/
 
 app.get('/api/persons', (request, response) => {
   Person.find({}).then(persons => {
@@ -156,6 +127,18 @@ app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
 */
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+  next(error)
+}
+
+// tämä tulee kaikkien muiden middlewarejen ja routejen rekisteröinnin jälkeen!
+app.use(errorHandler)
 
 // const PORT = process.env.PORT || 3001
 const PORT = process.env.PORT
