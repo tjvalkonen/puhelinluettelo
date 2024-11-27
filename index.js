@@ -2,28 +2,28 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
-const cors = require('cors')
-const Person = require('./models/person')
+const cors = require('cors' )
+const Person =  require('./models/person')
 
 /*
 let persons  = [
-  { 
-    name: "Arto Hellas", 
+  {
+    name: "Arto Hellas",
         number: "040-123456",
         id: "1"
   },
-  { 
-        name: "Ada Lovelace", 
+  {
+        name: "Ada Lovelace",
         number: "39-44-5323523",
         id: "2"
   },
-  { 
-        name: "Dan Abramov", 
+  {
+        name: "Dan Abramov",
         number: "12-43-234345",
         id: "3"
   },
-  { 
-        name: "Mary Poppendieck", 
+  {
+        name: "Mary Poppendieck",
         number: "39-23-6423122",
         id: "4"
   }
@@ -51,7 +51,7 @@ app.get('/info', (request, response, next) => {
   Person.find({}).then(persons => {
     response.send(`<p>Phonebook has info for ${persons.length} people</p></p>${date}</p>`)
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
@@ -63,7 +63,7 @@ app.get('/api/persons/:id', (request, response, next) => {
       response.status(404).end()
     }
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -77,19 +77,19 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request, response, next) => {
   const body = request.body
   console.log('post', body.name)
-/*
+  /*
 if(!body.name){
-  return response.status(400).json({ 
+  return response.status(400).json({
     error: `Name missing!`
   })
 } else if (!body.number)
 {
-  return response.status(400).json({ 
-    error: 'Number missing!' 
+  return response.status(400).json({
+    error: 'Number missing!'
   })
 }
 */
-  const person = new Person({
+  const person =  new Person({
     name: body.name,
     number: body.number,
   })
@@ -97,8 +97,8 @@ if(!body.name){
   person.save()
     .then(savedPerson => {
       response.json(savedPerson)
-  })
-  .catch(error => next(error))
+    })
+    .catch(error => next(error))
 })
 
 
@@ -115,10 +115,10 @@ app.put('/api/persons/:id', (request, response, next) => {
   // Number can be empty!
 
   Person.findByIdAndUpdate(
-    request.params.id, 
-    { name, number }, 
+    request.params.id,
+    { name, number },
     { new: true, runValidators: true, context: 'query' }
-    )
+  )
     .then(updatedPerson => {
       response.json(updatedPerson)
     })
@@ -144,7 +144,7 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message })
-}
+  }
   next(error)
 }
 
